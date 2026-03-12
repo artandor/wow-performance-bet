@@ -23,8 +23,8 @@ export default function BetDetails({ bet }: BetDetailsProps) {
   return (
     <div className="bg-white rounded-lg shadow p-6 space-y-4">
       <div className="flex justify-between items-start">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Bet Details</h2>
+        <div className="flex-1">
+          <h2 className="text-2xl font-bold text-gray-900">{bet.name}</h2>
           <p className="text-sm text-gray-500 mt-1">
             Created {createdDate.toLocaleString()}
           </p>
@@ -36,6 +36,11 @@ export default function BetDetails({ bet }: BetDetailsProps) {
         >
           {bet.status.toUpperCase()}
         </span>
+      </div>
+
+      <div className="border-l-4 border-blue-500 pl-4 py-2 bg-blue-50">
+        <p className="text-sm font-medium text-gray-700 mb-1">Description</p>
+        <p className="text-gray-800">{bet.description}</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

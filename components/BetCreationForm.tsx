@@ -3,10 +3,12 @@
 import { useState } from 'react'
 
 interface BetCreationFormProps {
-  onCreateBet: (goldAmount: number, closesAt: number) => Promise<void>
+  onCreateBet: (name: string, description: string, goldAmount: number, closesAt: number) => Promise<void>
 }
 
 export default function BetCreationForm({ onCreateBet }: BetCreationFormProps) {
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
   const [goldAmount, setGoldAmount] = useState('')
   const [closingTime, setClosingTime] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -19,6 +21,16 @@ export default function BetCreationForm({ onCreateBet }: BetCreationFormProps) {
     setSuccess(false)
 
     // Validation
+    if (!name.trim()) {
+      setError('Bet name is required')
+      return
+    }
+
+    if (!description.trim()) {
+      setError('Bet description is required')
+      return
+    }
+
     const gold = parseInt(goldAmount)
     if (isNaN(gold) || gold <= 0) {
       setError('Gold amount must be a positive number')
@@ -34,8 +46,10 @@ export default function BetCreationForm({ onCreateBet }: BetCreationFormProps) {
     setIsLoading(true)
 
     try {
-      await onCreateBet(gold, closingDate.getTime())
+      await onCreateBet(name.trim(), description.trim(), gold, closingDate.getTime())
       setSuccess(true)
+      setName('')
+      setDescription('')
       setGoldAmount('')
       setClosingTime('')
     } catch (err) {
@@ -47,6 +61,36 @@ export default function BetCreationForm({ onCreateBet }: BetCreationFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
+      <div>
+        <label htmlFor="bet-name" className="block text-sm font-medium text-gray-700 mb-1">
+          Bet Name
+        </label>
+        <input
+          id="bet-name"
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Mythic+ Speed Run"
+          required
+        />
+      </div>
+
+      <div>
+        <label htmlFor="bet-description" className="block text-sm font-medium text-gray-700 mb-1">
+          Description
+        </label>
+        <textarea
+          id="bet-description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Which group will complete the most +20 keys in 2 hours?"
+          rows={3}
+          required
+        />
+      </div>
+
       <div>
         <label htmlFor="gold-amount" className="block text-sm font-medium text-gray-700 mb-1">
           Gold Amount (per participant)

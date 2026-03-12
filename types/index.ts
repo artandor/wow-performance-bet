@@ -7,6 +7,8 @@ export interface Participant {
 
 export interface Bet {
   id: string
+  name: string
+  description: string
   goldAmount: number
   status: BetStatus
   createdAt: number // timestamp

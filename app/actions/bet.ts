@@ -7,8 +7,16 @@ import { Bet, Participant } from '@/types'
 import { getRoster } from '@/lib/roster-storage'
 import { getBetStatus } from '@/lib/bet-status'
 
-export async function createBetAction(goldAmount: number, closesAt: number) {
+export async function createBetAction(name: string, description: string, goldAmount: number, closesAt: number) {
   // Validation
+  if (!name || !name.trim()) {
+    throw new Error('Bet name is required')
+  }
+
+  if (!description || !description.trim()) {
+    throw new Error('Bet description is required')
+  }
+
   if (goldAmount <= 0) {
     throw new Error('Gold amount must be positive')
   }
@@ -19,6 +27,8 @@ export async function createBetAction(goldAmount: number, closesAt: number) {
 
   const bet: Bet = {
     id: generateBetId(),
+    name: name.trim(),
+    description: description.trim(),
     goldAmount,
     status: 'open',
     createdAt: Date.now(),

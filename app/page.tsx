@@ -83,15 +83,18 @@ export default function Home() {
                 className="block bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6"
               >
                 <div className="flex justify-between items-start mb-4">
-                  <div>
+                  <div className="flex-1">
                     <h2 className="text-xl font-semibold text-gray-900">
-                      {bet.goldAmount.toLocaleString()} Gold per Player
+                      {bet.name}
                     </h2>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                      {bet.description}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-2">
                       Created {new Date(bet.createdAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 ml-4">
                     <span
                       className={`px-3 py-1 rounded-full text-sm font-medium ${
                         statusColors[bet.status]
@@ -103,16 +106,22 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="grid grid-cols-4 gap-4 text-center">
+                  <div>
+                    <p className="text-sm text-gray-600">Gold/Player</p>
+                    <p className="text-lg font-bold text-gray-900">
+                      {bet.goldAmount.toLocaleString()}
+                    </p>
+                  </div>
                   <div>
                     <p className="text-sm text-gray-600">Participants</p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-lg font-bold text-gray-900">
                       {bet.participants.length}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Total Pot</p>
-                    <p className="text-2xl font-bold text-green-600">
+                    <p className="text-lg font-bold text-green-600">
                       {potSize.toLocaleString()}
                     </p>
                   </div>
