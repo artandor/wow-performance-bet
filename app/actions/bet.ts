@@ -160,3 +160,27 @@ export async function deleteBetAction(betId: string) {
   await deleteBet(betId)
   revalidatePath('/')
 }
+
+export async function updateBetInfoAction(betId: string, name: string, description: string) {
+  const bet = await getBet(betId)
+
+  if (!bet) {
+    throw new Error('Bet not found')
+  }
+
+  // Validation
+  if (!name || !name.trim()) {
+    throw new Error('Bet name is required')
+  }
+
+  if (!description || !description.trim()) {
+    throw new Error('Bet description is required')
+  }
+
+  bet.name = name.trim()
+  bet.description = description.trim()
+  
+  await updateBet(bet)
+  revalidatePath(`/bets/${betId}`)
+  revalidatePath('/')
+}

@@ -3,7 +3,7 @@
 import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Bet } from '@/types'
-import { getBetAction, placeBetAction, resolveBetAction, closeBetAction, reopenBetAction } from '@/app/actions/bet'
+import { getBetAction, placeBetAction, resolveBetAction, closeBetAction, reopenBetAction, updateBetInfoAction } from '@/app/actions/bet'
 import { getRosterAction } from '@/app/actions/roster'
 import BetDetails from '@/components/BetDetails'
 import ParticipantList from '@/components/ParticipantList'
@@ -61,6 +61,11 @@ export default function BetDetailPage({ params }: { params: Promise<{ id: string
     await loadData()
   }
 
+  const handleUpdateInfo = async (name: string, description: string) => {
+    await updateBetInfoAction(id, name, description)
+    await loadData()
+  }
+
   if (loading) {
     return (
       <main className="container mx-auto p-8 max-w-6xl">
@@ -89,7 +94,7 @@ export default function BetDetailPage({ params }: { params: Promise<{ id: string
       </div>
 
       <div className="space-y-6">
-        <BetDetails bet={bet} />
+        <BetDetails bet={bet} onUpdate={handleUpdateInfo} />
 
         <div className="grid lg:grid-cols-2 gap-6">
           <ParticipantList participants={bet.participants} />
