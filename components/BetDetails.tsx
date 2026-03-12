@@ -145,10 +145,15 @@ export default function BetDetails({ bet, onUpdate }: BetDetailsProps) {
         </div>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div>
           <p className="text-sm text-gray-600">Gold per Player</p>
           <p className="text-2xl font-bold text-gray-900">{bet.goldAmount.toLocaleString()}</p>
+        </div>
+
+        <div>
+          <p className="text-sm text-gray-600">Group Size</p>
+          <p className="text-2xl font-bold text-gray-900">{bet.groupSize}</p>
         </div>
 
         <div>

@@ -3,13 +3,14 @@
 import { useState } from 'react'
 
 interface BetCreationFormProps {
-  onCreateBet: (name: string, description: string, goldAmount: number, closesAt: number) => Promise<void>
+  onCreateBet: (name: string, description: string, goldAmount: number, groupSize: number, closesAt: number) => Promise<void>
 }
 
 export default function BetCreationForm({ onCreateBet }: BetCreationFormProps) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [goldAmount, setGoldAmount] = useState('')
+  const [groupSize, setGroupSize] = useState('5')
   const [closingTime, setClosingTime] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -37,6 +38,12 @@ export default function BetCreationForm({ onCreateBet }: BetCreationFormProps) {
       return
     }
 
+    const size = parseInt(groupSize)
+    if (isNaN(size) || size < 1 || size > 40) {
+      setError('Group size must be between 1 and 40')
+      return
+    }
+
     const closingDate = new Date(closingTime)
     if (closingDate.getTime() <= Date.now()) {
       setError('Closing time must be in the future')
@@ -46,11 +53,12 @@ export default function BetCreationForm({ onCreateBet }: BetCreationFormProps) {
     setIsLoading(true)
 
     try {
-      await onCreateBet(name.trim(), description.trim(), gold, closingDate.getTime())
+      await onCreateBet(name.trim(), description.trim(), gold, size, closingDate.getTime())
       setSuccess(true)
       setName('')
       setDescription('')
       setGoldAmount('')
+      setGroupSize('5')
       setClosingTime('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create bet')
@@ -104,6 +112,24 @@ export default function BetCreationForm({ onCreateBet }: BetCreationFormProps) {
           placeholder="1000"
           required
         />
+      </div>
+
+      <div>
+        <label htmlFor="group-size" className="block text-sm font-medium text-gray-700 mb-1">
+          Group Size (players per team)
+        </label>
+        <input
+          id="group-size"
+          type="number"
+          min="1"
+          max="40"
+          value={groupSize}
+          onChange={(e) => setGroupSize(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="5"
+          required
+        />
+        <p className="text-xs text-gray-500 mt-1">Default: 5 players. Choose 1-40 players per team.</p>
       </div>
 
       <div>

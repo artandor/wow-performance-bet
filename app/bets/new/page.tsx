@@ -8,8 +8,8 @@ import { createBetAction } from '@/app/actions/bet'
 export default function NewBetPage() {
   const router = useRouter()
 
-  const handleCreateBet = async (name: string, description: string, goldAmount: number, closesAt: number) => {
-    const betId = await createBetAction(name, description, goldAmount, closesAt)
+  const handleCreateBet = async (name: string, description: string, goldAmount: number, groupSize: number, closesAt: number) => {
+    const betId = await createBetAction(name, description, goldAmount, groupSize, closesAt)
     router.push(`/bets/${betId}`)
   }
 

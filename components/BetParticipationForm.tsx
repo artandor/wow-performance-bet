@@ -6,12 +6,14 @@ import PlayerSelector from './PlayerSelector'
 interface BetParticipationFormProps {
   betId: string
   roster: string[]
+  groupSize: number
   onPlaceBet: (betId: string, playerId: string, selectedGroup: string[]) => Promise<void>
 }
 
 export default function BetParticipationForm({
   betId,
   roster,
+  groupSize,
   onPlaceBet,
 }: BetParticipationFormProps) {
   const [playerId, setPlayerId] = useState('')
@@ -30,8 +32,8 @@ export default function BetParticipationForm({
       return
     }
 
-    if (selectedPlayers.length !== 5) {
-      setError('You must select exactly 5 players')
+    if (selectedPlayers.length !== groupSize) {
+      setError(`You must select exactly ${groupSize} players`)
       return
     }
 
@@ -70,7 +72,7 @@ export default function BetParticipationForm({
         roster={roster}
         selectedPlayers={selectedPlayers}
         onSelectionChange={setSelectedPlayers}
-        maxPlayers={5}
+        maxPlayers={groupSize}
       />
 
       {error && (
@@ -83,7 +85,7 @@ export default function BetParticipationForm({
 
       <button
         type="submit"
-        disabled={isLoading || selectedPlayers.length !== 5 || !playerId.trim()}
+        disabled={isLoading || selectedPlayers.length !== groupSize || !playerId.trim()}
         className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
       >
         {isLoading ? 'Placing Bet...' : 'Place Bet'}

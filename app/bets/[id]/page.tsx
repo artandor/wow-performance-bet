@@ -112,6 +112,7 @@ export default function BetDetailPage({ params }: { params: Promise<{ id: string
                 <BetParticipationForm
                   betId={bet.id}
                   roster={roster}
+                  groupSize={bet.groupSize}
                   onPlaceBet={handlePlaceBet}
                 />
               </div>

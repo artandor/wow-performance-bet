@@ -7,7 +7,7 @@ import { Bet, Participant } from '@/types'
 import { getRoster } from '@/lib/roster-storage'
 import { getBetStatus } from '@/lib/bet-status'
 
-export async function createBetAction(name: string, description: string, goldAmount: number, closesAt: number) {
+export async function createBetAction(name: string, description: string, goldAmount: number, groupSize: number, closesAt: number) {
   // Validation
   if (!name || !name.trim()) {
     throw new Error('Bet name is required')
@@ -21,6 +21,10 @@ export async function createBetAction(name: string, description: string, goldAmo
     throw new Error('Gold amount must be positive')
   }
 
+  if (!groupSize || groupSize < 1 || groupSize > 40) {
+    throw new Error('Group size must be between 1 and 40')
+  }
+
   if (closesAt <= Date.now()) {
     throw new Error('Closing time must be in the future')
   }
@@ -30,6 +34,7 @@ export async function createBetAction(name: string, description: string, goldAmo
     name: name.trim(),
     description: description.trim(),
     goldAmount,
+    groupSize,
     status: 'open',
     createdAt: Date.now(),
     closesAt,
@@ -53,8 +58,14 @@ export async function placeBetAction(
     throw new Error('Player ID is required')
   }
 
-  if (selectedGroup.length !== 5) {
-    throw new Error('You must select exactly 5 players')
+  // Get the bet to check groupSize
+  const bet = await getBet(betId)
+  if (!bet) {
+    throw new Error('Bet not found')
+  }
+
+  if (selectedGroup.length !== bet.groupSize) {
+    throw new Error(`You must select exactly ${bet.groupSize} players`)
   }
 
   // Verify players are in roster
@@ -95,8 +106,8 @@ export async function resolveBetAction(betId: string, winningGroup: string[]) {
     throw new Error('Cannot resolve an open bet')
   }
 
-  if (winningGroup.length !== 5) {
-    throw new Error('Winning group must have exactly 5 players')
+  if (winningGroup.length !== bet.groupSize) {
+    throw new Error(`Winning group must have exactly ${bet.groupSize} players`)
   }
 
   // Check if any participant selected this group
