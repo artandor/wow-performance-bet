@@ -20,6 +20,7 @@ export default function BetDetailPage({ params }: { params: Promise<{ id: string
 
   useEffect(() => {
     loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   const loadData = async () => {

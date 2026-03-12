@@ -51,7 +51,7 @@ export async function kvGetAll<T>(pattern: string): Promise<T[]> {
     if (keys.length === 0) return []
     
     const values = await Promise.all(
-      keys.map(async (key) => {
+      keys.map(async (key: string) => {
         const value = await redis.get(key)
         return value ? JSON.parse(value) : null
       })
