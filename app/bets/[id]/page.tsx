@@ -39,10 +39,9 @@ export default function BetDetailPage({ params }: { params: Promise<{ id: string
 
   const handlePlaceBet = async (
     betId: string,
-    playerId: string,
     selectedGroup: string[]
   ) => {
-    await placeBetAction(betId, playerId, selectedGroup)
+    await placeBetAction(betId, selectedGroup)
     await loadData()
   }
 

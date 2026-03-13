@@ -2,6 +2,7 @@ export type BetStatus = 'open' | 'closed' | 'resolved'
 
 export interface Participant {
   playerId: string
+  playerName?: string // Discord username - optional for backward compatibility
   selectedGroup: string[] // player names matching bet's groupSize
 }
 
@@ -16,6 +17,7 @@ export interface Bet {
   closesAt: number // timestamp
   participants: Participant[]
   winningGroup?: string[] // player names matching groupSize
+  serverId?: string // Discord server (guild) ID - optional for backward compatibility
 }
 
 export type Roster = string[] // array of player names

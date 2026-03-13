@@ -23,9 +23,12 @@ export default function ParticipantList({ participants }: ParticipantListProps) 
         participants: [],
       }
     }
-    acc[groupKey].participants.push(participant.playerId)
+    acc[groupKey].participants.push({
+      id: participant.playerId,
+      name: participant.playerName || participant.playerId,
+    })
     return acc
-  }, {} as Record<string, { group: string[]; participants: string[] }>)
+  }, {} as Record<string, { group: string[]; participants: Array<{ id: string; name: string }> }>)
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -55,12 +58,12 @@ export default function ParticipantList({ participants }: ParticipantListProps) 
             <div>
               <p className="text-xs text-gray-600 mb-1">Bet by:</p>
               <div className="flex flex-wrap gap-2">
-                {groupData.participants.map((playerId) => (
+                {groupData.participants.map((player) => (
                   <span
-                    key={playerId}
+                    key={player.id}
                     className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs"
                   >
-                    {playerId}
+                    {player.name}
                   </span>
                 ))}
               </div>

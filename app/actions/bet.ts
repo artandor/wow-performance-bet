@@ -1,13 +1,31 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createBet, generateBetId, getBet, updateBet, getAllBets, deleteBet } from '@/lib/bet-storage'
+import { createBet, generateBetId, getBet, updateBet, getBetsByServerId, deleteBet } from '@/lib/bet-storage'
 import { addParticipantToBet } from '@/lib/bet-transactions'
 import { Bet, Participant } from '@/types'
 import { getRoster } from '@/lib/roster-storage'
 import { getBetStatus } from '@/lib/bet-status'
+import { getServerContext, verifyServerAccess, getCurrentUserId, getCurrentUser } from '@/lib/server-context'
+
+/**
+ * Verify user has access to a server and return the serverId
+ */
+async function verifyAndGetServer(serverId: string): Promise<void> {
+  const { hasAccess } = await verifyServerAccess(serverId)
+  
+  if (!hasAccess) {
+    throw new Error('Access denied: You are not a member of this server')
+  }
+}
 
 export async function createBetAction(name: string, description: string, goldAmount: number, groupSize: number, closesAt: number) {
+  // Get server context
+  const serverContext = await getServerContext()
+  if (!serverContext) {
+    throw new Error('No server context available')
+  }
+  
   // Validation
   if (!name || !name.trim()) {
     throw new Error('Bet name is required')
@@ -39,6 +57,7 @@ export async function createBetAction(name: string, description: string, goldAmo
     createdAt: Date.now(),
     closesAt,
     participants: [],
+    serverId: serverContext.activeServerId,
   }
 
   await createBet(bet)
@@ -50,18 +69,23 @@ export async function createBetAction(name: string, description: string, goldAmo
 
 export async function placeBetAction(
   betId: string,
-  playerId: string,
   selectedGroup: string[]
 ) {
-  // Validation
-  if (!playerId || !playerId.trim()) {
-    throw new Error('Player ID is required')
+  // Get current user info from session
+  const user = await getCurrentUser()
+  if (!user) {
+    throw new Error('You must be logged in to place a bet')
   }
 
-  // Get the bet to check groupSize
+  // Get the bet to check groupSize and serverId
   const bet = await getBet(betId)
   if (!bet) {
     throw new Error('Bet not found')
+  }
+
+  // Verify user has access to this bet's server
+  if (bet.serverId) {
+    await verifyAndGetServer(bet.serverId)
   }
 
   if (selectedGroup.length !== bet.groupSize) {
@@ -69,14 +93,16 @@ export async function placeBetAction(
   }
 
   // Verify players are in roster
-  const roster = await getRoster()
+  const serverId = bet.serverId || 'default'
+  const roster = await getRoster(serverId)
   const invalidPlayers = selectedGroup.filter(p => !roster.includes(p))
   if (invalidPlayers.length > 0) {
     throw new Error(`Players not in roster: ${invalidPlayers.join(', ')}`)
   }
 
   const participant: Participant = {
-    playerId: playerId.trim(),
+    playerId: user.id,
+    playerName: user.name,
     selectedGroup,
   }
 
@@ -91,7 +117,21 @@ export async function placeBetAction(
 }
 
 export async function getBetAction(betId: string) {
-  return await getBet(betId)
+  const bet = await getBet(betId)
+  
+  if (!bet) {
+    return null
+  }
+  
+  // Verify access if bet has serverId
+  if (bet.serverId) {
+    const { hasAccess } = await verifyServerAccess(bet.serverId)
+    if (!hasAccess) {
+      throw new Error('Access denied: You are not a member of this server')
+    }
+  }
+  
+  return bet
 }
 
 export async function resolveBetAction(betId: string, winningGroup: string[]) {
@@ -99,6 +139,11 @@ export async function resolveBetAction(betId: string, winningGroup: string[]) {
 
   if (!bet) {
     throw new Error('Bet not found')
+  }
+
+  // Verify server access
+  if (bet.serverId) {
+    await verifyAndGetServer(bet.serverId)
   }
 
   const currentStatus = getBetStatus(bet)
@@ -124,7 +169,13 @@ export async function resolveBetAction(betId: string, winningGroup: string[]) {
 }
 
 export async function getAllBetsAction() {
-  return await getAllBets()
+  const serverContext = await getServerContext()
+  
+  if (!serverContext) {
+    return []
+  }
+  
+  return await getBetsByServerId(serverContext.activeServerId)
 }
 
 export async function closeBetAction(betId: string) {
@@ -132,6 +183,11 @@ export async function closeBetAction(betId: string) {
 
   if (!bet) {
     throw new Error('Bet not found')
+  }
+
+  // Verify server access
+  if (bet.serverId) {
+    await verifyAndGetServer(bet.serverId)
   }
 
   if (bet.status === 'resolved') {
@@ -151,6 +207,11 @@ export async function reopenBetAction(betId: string) {
     throw new Error('Bet not found')
   }
 
+  // Verify server access
+  if (bet.serverId) {
+    await verifyAndGetServer(bet.serverId)
+  }
+
   if (bet.status === 'resolved') {
     throw new Error('Cannot reopen a resolved bet')
   }
@@ -168,6 +229,11 @@ export async function deleteBetAction(betId: string) {
     throw new Error('Bet not found')
   }
 
+  // Verify server access
+  if (bet.serverId) {
+    await verifyAndGetServer(bet.serverId)
+  }
+
   await deleteBet(betId)
   revalidatePath('/')
 }
@@ -177,6 +243,11 @@ export async function updateBetInfoAction(betId: string, name: string, descripti
 
   if (!bet) {
     throw new Error('Bet not found')
+  }
+
+  // Verify server access
+  if (bet.serverId) {
+    await verifyAndGetServer(bet.serverId)
   }
 
   // Validation
