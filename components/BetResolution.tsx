@@ -85,7 +85,7 @@ export default function BetResolution({ bet, onResolve }: BetResolutionProps) {
                     key={winner.playerId}
                     className="flex justify-between items-center p-3 bg-green-50 rounded"
                   >
-                    <span className="font-medium">{winner.playerId}</span>
+                    <span className="font-medium">{winner.playerName ?? winner.playerId}</span>
                     <span className="text-green-700 font-bold">
                       +{Math.floor(payoutPerWinner).toLocaleString()} gold
                     </span>
@@ -110,7 +110,7 @@ export default function BetResolution({ bet, onResolve }: BetResolutionProps) {
                     key={loser.playerId}
                     className="flex justify-between items-center p-3 bg-red-50 rounded"
                   >
-                    <span className="font-medium">{loser.playerId}</span>
+                    <span className="font-medium">{loser.playerName ?? loser.playerId}</span>
                     <span className="text-red-700 font-bold">
                       -{bet.goldAmount.toLocaleString()} gold
                     </span>
