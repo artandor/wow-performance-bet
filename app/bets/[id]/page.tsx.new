@@ -1,0 +1,153 @@
+'use client'
+
+import { use, useEffect, useState } from 'react'
+import Link from 'next/link'
+import { ChevronLeft, Loader2, Lock } from 'lucide-react'
+import { Bet } from '@/types'
+import { getBetAction, placeBetAction, resolveBetAction, closeBetAction, reopenBetAction, updateBetInfoAction } from '@/app/actions/bet'
+import { getRosterAction } from '@/app/actions/roster'
+import BetDetails from '@/components/BetDetails'
+import ParticipantList from '@/components/ParticipantList'
+import BetParticipationForm from '@/components/BetParticipationForm'
+import BetResolution from '@/components/BetResolution'
+import BetControls from '@/components/BetControls'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { updateBetStatus, canParticipate } from '@/lib/bet-status'
+
+export default function BetDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
+  const [bet, setBet] = useState<Bet | null>(null)
+  const [roster, setRoster] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
+
+  const loadData = async () => {
+    setLoading(true)
+    const [betData, rosterData] = await Promise.all([
+      getBetAction(id),
+      getRosterAction(),
+    ])
+
+    if (betData) {
+      setBet(updateBetStatus(betData))
+    }
+    setRoster(rosterData)
+    setLoading(false)
+  }
+
+  const handlePlaceBet = async (betId: string, selectedGroup: string[]) => {
+    await placeBetAction(betId, selectedGroup)
+    await loadData()
+  }
+
+  const handleResolve = async (winningGroup: string[]) => {
+    await resolveBetAction(id, winningGroup)
+    await loadData()
+  }
+
+  const handleClose = async () => {
+    await closeBetAction(id)
+    await loadData()
+  }
+
+  const handleReopen = async () => {
+    await reopenBetAction(id)
+    await loadData()
+  }
+
+  const handleUpdateInfo = async (name: string, description: string) => {
+    await updateBetInfoAction(id, name, description)
+    await loadData()
+  }
+
+  if (loading) {
+    return (
+      <main className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="w-8 h-8 text-gold animate-spin" />
+        </div>
+      </main>
+    )
+  }
+
+  if (!bet) {
+    return (
+      <main className="container mx-auto px-4 py-8 max-w-6xl">
+        <p className="text-table font-medium">Pari introuvable.</p>
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-gold transition-colors mt-4"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          Retour aux paris
+        </Link>
+      </main>
+    )
+  }
+
+  return (
+    <main className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="mb-6">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-gold transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          Retour aux paris
+        </Link>
+      </div>
+
+      <div className="space-y-6">
+        <BetDetails bet={bet} onUpdate={handleUpdateInfo} />
+
+        <div className="grid lg:grid-cols-2 gap-6">
+          <ParticipantList participants={bet.participants} />
+
+          <div className="space-y-6">
+            <BetControls
+              bet={bet}
+              onClose={handleClose}
+              onReopen={handleReopen}
+            />
+
+            {canParticipate(bet) && roster.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Placer un pari</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <BetParticipationForm
+                    betId={bet.id}
+                    roster={roster}
+                    groupSize={bet.groupSize}
+                    onPlaceBet={handlePlaceBet}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {!canParticipate(bet) && bet.status !== 'resolved' && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-2 text-muted mb-1">
+                    <Lock className="w-4 h-4" />
+                    <span className="font-semibold text-bright">Paris fermés</span>
+                  </div>
+                  <p className="text-sm text-muted">
+                    Ce pari n&apos;accepte plus de participants.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+
+        <BetResolution bet={bet} onResolve={handleResolve} />
+      </div>
+    </main>
+  )
+}

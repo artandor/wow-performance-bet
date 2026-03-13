@@ -1,7 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { Bet } from '@/types'
+import { Bet, BetGroupDps, LegacyBet } from '@/types'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import { Trophy, AlertCircle, CheckCircle2, Crown } from 'lucide-react'
 
 interface BetResolutionProps {
   bet: Bet
@@ -14,60 +18,50 @@ export default function BetResolution({ bet, onResolve }: BetResolutionProps) {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
 
-  // Get unique groups from participants
+  // BetResolution only handles group-dps/legacy bets
+  const groupBet = bet as BetGroupDps | LegacyBet
+
   const uniqueGroups = Array.from(
-    new Set(bet.participants.map((p) => p.selectedGroup.sort().join(',')))
-  ).map((groupKey) => groupKey.split(','))
+    new Set(groupBet.participants.map((p) => (p as { selectedGroup?: string[] }).selectedGroup?.sort().join(',') ?? '').filter(Boolean))
+  ).map((key) => key.split(','))
 
   const handleResolve = async () => {
-    if (!selectedGroup) {
-      setError('Please select a winning group')
-      return
-    }
-
-    setIsLoading(true)
-    setError('')
-    setSuccess(false)
-
+    if (!selectedGroup) { setError('Select a winning group'); return }
+    setIsLoading(true); setError(''); setSuccess(false)
     try {
       await onResolve(selectedGroup)
       setSuccess(true)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to resolve bet')
-    } finally {
-      setIsLoading(false)
-    }
+      setError(err instanceof Error ? err.message : 'Failed')
+    } finally { setIsLoading(false) }
   }
 
-  const winners = bet.winningGroup
-    ? bet.participants.filter((p) =>
-        p.selectedGroup.sort().join(',') === bet.winningGroup?.sort().join(',')
-      )
+  const winningGroup = groupBet.winningGroup
+  const winners = winningGroup
+    ? groupBet.participants.filter((p) => (p as { selectedGroup?: string[] }).selectedGroup?.sort().join(',') === winningGroup.sort().join(','))
     : []
-
-  const losers = bet.winningGroup
-    ? bet.participants.filter((p) =>
-        p.selectedGroup.sort().join(',') !== bet.winningGroup?.sort().join(',')
-      )
+  const losers = winningGroup
+    ? groupBet.participants.filter((p) => (p as { selectedGroup?: string[] }).selectedGroup?.sort().join(',') !== winningGroup.sort().join(','))
     : []
-
   const potSize = bet.goldAmount * bet.participants.length
   const payoutPerWinner = winners.length > 0 ? potSize / winners.length : 0
 
   if (bet.status === 'resolved') {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4 text-green-600">Bet Resolved</h3>
-
-        <div className="space-y-6">
+      <Card className="border-goblin/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-goblin">
+            <Trophy className="w-5 h-5" />
+            Bet Resolved
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
           <div>
-            <p className="text-sm text-gray-600 mb-2">Winning Group:</p>
+            <p className="text-xs text-muted uppercase tracking-wider mb-2">Winning Group</p>
             <div className="flex flex-wrap gap-2">
-              {bet.winningGroup?.map((player) => (
-                <span
-                  key={player}
-                  className="px-3 py-1 bg-green-100 text-green-800 rounded font-medium"
-                >
+              {winningGroup?.map((player) => (
+                <span key={player} className="flex items-center gap-1 px-3 py-1 bg-goblin/15 text-goblin border border-goblin/25 rounded-full text-sm font-semibold">
+                  <Crown className="w-3 h-3" />
                   {player}
                 </span>
               ))}
@@ -76,134 +70,146 @@ export default function BetResolution({ bet, onResolve }: BetResolutionProps) {
 
           {winners.length > 0 ? (
             <div>
-              <p className="text-sm text-gray-600 mb-2">
-                Winners ({winners.length}):
+              <p className="text-xs text-muted uppercase tracking-wider mb-2">
+                Winners ({winners.length})
               </p>
               <div className="space-y-2">
-                {winners.map((winner) => (
-                  <div
-                    key={winner.playerId}
-                    className="flex justify-between items-center p-3 bg-green-50 rounded"
-                  >
-                    <span className="font-medium">{winner.playerName ?? winner.playerId}</span>
-                    <span className="text-green-700 font-bold">
-                      +{Math.floor(payoutPerWinner).toLocaleString()} gold
-                    </span>
+                {winners.map((w) => (
+                  <div key={w.playerId} className="flex justify-between items-center p-3 rounded-lg bg-goblin/10 border border-goblin/20">
+                    <span className="text-sm font-medium text-bright">{w.playerName ?? w.playerId}</span>
+                    <span className="text-sm font-bold text-goblin">+{Math.floor(payoutPerWinner).toLocaleString()} or</span>
                   </div>
                 ))}
               </div>
             </div>
           ) : (
-            <div className="p-4 bg-yellow-50 text-yellow-800 rounded">
-              No winners - no participant selected this group.
+            <div className="p-4 rounded-lg bg-gold/10 border border-gold/20 text-sm text-gold">
+              No winners &mdash; no one selected this group.
             </div>
           )}
 
           {losers.length > 0 && (
             <div>
-              <p className="text-sm text-gray-600 mb-2">
-                Losers ({losers.length}):
+              <p className="text-xs text-muted uppercase tracking-wider mb-2">
+                Losers ({losers.length})
               </p>
               <div className="space-y-2">
-                {losers.map((loser) => (
-                  <div
-                    key={loser.playerId}
-                    className="flex justify-between items-center p-3 bg-red-50 rounded"
-                  >
-                    <span className="font-medium">{loser.playerName ?? loser.playerId}</span>
-                    <span className="text-red-700 font-bold">
-                      -{bet.goldAmount.toLocaleString()} gold
-                    </span>
+                {losers.map((l) => (
+                  <div key={l.playerId} className="flex justify-between items-center p-3 rounded-lg bg-table/10 border border-table/20">
+                    <span className="text-sm text-bright">{l.playerName ?? l.playerId}</span>
+                    <span className="text-sm font-bold text-orange-400">-{bet.goldAmount.toLocaleString()} or</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     )
   }
 
   if (bet.status === 'open') {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-2 text-gray-600">Resolution</h3>
-        <p className="text-sm text-gray-500">
-          Bet must be closed before it can be resolved. Wait for the closing time.
-        </p>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-semibold uppercase tracking-widest text-muted">
+            Resolution
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted">The bet must be closed before it can be resolved.</p>
+        </CardContent>
+      </Card>
     )
   }
 
   if (uniqueGroups.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-2">Resolve Bet</h3>
-        <p className="text-sm text-gray-500">
-          No participants yet. Cannot resolve bet with no participants.
-        </p>
-      </div>
+      <Card>
+        <CardHeader><CardTitle>Resolve Bet</CardTitle></CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted">No participants &mdash; cannot resolve.</p>
+        </CardContent>
+      </Card>
     )
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold mb-4">Resolve Bet</h3>
+    <Card className="border-gold/15">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Trophy className="w-4 h-4 text-gold" />
+          Resolve Bet
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted">Select the winning group:</p>
 
-      <p className="text-sm text-gray-600 mb-4">
-        Select the winning group based on performance:
-      </p>
+        <div className="space-y-2">
+          {uniqueGroups.map((group, index) => {
+            const groupKey = group.sort().join(',')
+            const isSelected = selectedGroup?.sort().join(',') === groupKey
+            const bettorsCount = groupBet.participants.filter(
+              (p) => (p as { selectedGroup?: string[] }).selectedGroup?.sort().join(',') === groupKey
+            ).length
 
-      <div className="space-y-3 mb-6">
-        {uniqueGroups.map((group, index) => {
-          const groupKey = group.sort().join(',')
-          const isSelected = selectedGroup?.sort().join(',') === groupKey
-          const bettorsCount = bet.participants.filter(
-            (p) => p.selectedGroup.sort().join(',') === groupKey
-          ).length
+            return (
+              <button
+                key={index}
+                type="button"
+                onClick={() => setSelectedGroup(group)}
+                className={cn(
+                  'w-full text-left p-4 rounded-lg border transition-all',
+                  isSelected
+                    ? 'border-gold/50 bg-gold/10 shadow-gold/10 shadow-sm'
+                    : 'border-white/10 bg-elevated/50 hover:border-white/20 hover:bg-elevated'
+                )}
+              >
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-semibold text-bright">Group {index + 1}</span>
+                  <span className="text-xs text-muted">{bettorsCount} bet{bettorsCount > 1 ? 's' : ''}</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {group.map((player) => (
+                    <span
+                      key={player}
+                      className={cn(
+                        'px-2 py-0.5 rounded-full text-xs font-medium border',
+                        isSelected
+                          ? 'bg-gold/20 text-gold border-gold/30'
+                          : 'bg-elevated text-muted border-white/10'
+                      )}
+                    >
+                      {player}
+                    </span>
+                  ))}
+                </div>
+              </button>
+            )
+          })}
+        </div>
 
-          return (
-            <button
-              key={index}
-              type="button"
-              onClick={() => setSelectedGroup(group)}
-              className={`w-full text-left p-4 rounded-lg border-2 transition-colors ${
-                isSelected
-                  ? 'border-green-500 bg-green-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <div className="flex justify-between items-start mb-2">
-                <span className="font-medium">Group {index + 1}</span>
-                <span className="text-sm text-gray-500">
-                  {bettorsCount} {bettorsCount === 1 ? 'bet' : 'bets'}
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {group.map((player) => (
-                  <span
-                    key={player}
-                    className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm"
-                  >
-                    {player}
-                  </span>
-                ))}
-              </div>
-            </button>
-          )
-        })}
-      </div>
+        {error && (
+          <p className="flex items-center gap-1.5 text-xs text-orange-400">
+            <AlertCircle className="w-3.5 h-3.5" /> {error}
+          </p>
+        )}
+        {success && (
+          <p className="flex items-center gap-1.5 text-xs text-goblin">
+            <CheckCircle2 className="w-3.5 h-3.5" /> Bet resolved!
+          </p>
+        )}
 
-      {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
-      {success && <p className="text-sm text-green-600 mb-4">Bet resolved successfully!</p>}
-
-      <button
-        onClick={handleResolve}
-        disabled={!selectedGroup || isLoading}
-        className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-      >
-        {isLoading ? 'Resolving...' : 'Resolve Bet'}
-      </button>
-    </div>
+        <Button
+          onClick={handleResolve}
+          disabled={!selectedGroup || isLoading}
+          variant="success"
+          className="w-full gap-2"
+        >
+          <Trophy className="w-4 h-4" />
+          {isLoading ? 'Resolving...' : 'Confirm result'}
+        </Button>
+      </CardContent>
+    </Card>
   )
 }

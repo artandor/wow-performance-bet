@@ -10,28 +10,32 @@ const publicRoutes = [
   "/favicon.ico",
 ];
 
-export default auth((req) => {
+function authMiddlewareHandler(req: any) {
   const { pathname } = req.nextUrl;
-  
-  // Check if the route is public
+
   const isPublicRoute = publicRoutes.some((route) =>
     pathname.startsWith(route)
   );
-  
+
   if (isPublicRoute) {
     return NextResponse.next();
   }
-  
+
   // Redirect to login if not authenticated
   if (!req.auth) {
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
-  
+
   return NextResponse.next();
-});
+}
+
+// In demo mode, skip auth entirely so the app works without any credentials.
+export default process.env.DEMO_MODE === 'true'
+  ? (_req: NextRequest) => NextResponse.next()
+  : auth(authMiddlewareHandler);
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|assets).*)"],
 };

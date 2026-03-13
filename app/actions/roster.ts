@@ -3,8 +3,12 @@
 import { revalidatePath } from 'next/cache'
 import { setRoster, updateRoster, getRoster } from '@/lib/roster-storage'
 import { getServerContext } from '@/lib/server-context'
+import * as demo from '@/lib/demo/roster-actions'
+
+const IS_DEMO = process.env.DEMO_MODE === 'true'
 
 export async function importRoster(roster: string[]) {
+  if (IS_DEMO) { demo.demoImportRoster(roster); return }
   const serverContext = await getServerContext()
   if (!serverContext) {
     throw new Error('No server context available')
@@ -19,6 +23,7 @@ export async function importRoster(roster: string[]) {
 }
 
 export async function updateRosterAction(roster: string[]) {
+  if (IS_DEMO) { demo.demoImportRoster(roster); return }
   const serverContext = await getServerContext()
   if (!serverContext) {
     throw new Error('No server context available')
@@ -29,6 +34,7 @@ export async function updateRosterAction(roster: string[]) {
 }
 
 export async function getRosterAction() {
+  if (IS_DEMO) return demo.demoGetRoster()
   const serverContext = await getServerContext()
   if (!serverContext) {
     return []

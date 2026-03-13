@@ -1,7 +1,9 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { Bet } from '@/types'
+import { Button } from '@/components/ui/button'
+import { Lock, Unlock, AlertCircle, CheckCircle2, ShieldAlert } from 'lucide-react'
 
 interface BetControlsProps {
   bet: Bet
@@ -15,73 +17,68 @@ export default function BetControls({ bet, onClose, onReopen }: BetControlsProps
   const [success, setSuccess] = useState('')
 
   const handleClose = async () => {
-    setIsLoading(true)
-    setError('')
-    setSuccess('')
-
-    try {
-      await onClose()
-      setSuccess('Bet closed successfully')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to close bet')
-    } finally {
-      setIsLoading(false)
-    }
+    setIsLoading(true); setError(''); setSuccess('')
+    try { await onClose(); setSuccess('Betting closed') }
+    catch (err) { setError(err instanceof Error ? err.message : 'Failed') }
+    finally { setIsLoading(false) }
   }
 
   const handleReopen = async () => {
-    setIsLoading(true)
-    setError('')
-    setSuccess('')
-
-    try {
-      await onReopen()
-      setSuccess('Bet reopened successfully')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to reopen bet')
-    } finally {
-      setIsLoading(false)
-    }
+    setIsLoading(true); setError(''); setSuccess('')
+    try { await onReopen(); setSuccess('Betting reopened') }
+    catch (err) { setError(err instanceof Error ? err.message : 'Failed') }
+    finally { setIsLoading(false) }
   }
 
-  if (bet.status === 'resolved') {
-    return null // Can't close/reopen resolved bets
-  }
+  if (bet.status === 'resolved') return null
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold mb-4">Bet Controls</h3>
-
-      <div className="space-y-3">
-        {bet.status === 'open' && (
-          <button
-            onClick={handleClose}
-            disabled={isLoading}
-            className="w-full px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-          >
-            {isLoading ? 'Closing...' : 'Close Bet Now'}
-          </button>
-        )}
-
-        {bet.status === 'closed' && (
-          <button
-            onClick={handleReopen}
-            disabled={isLoading}
-            className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-          >
-            {isLoading ? 'Reopening...' : 'Reopen Bet'}
-          </button>
-        )}
-
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        {success && <p className="text-sm text-green-600">{success}</p>}
-
-        <p className="text-xs text-gray-500">
-          {bet.status === 'open' 
-            ? 'Closing the bet will prevent new participants from joining.'
-            : 'Reopening will allow participants to join again.'}
-        </p>
+    <div className="rounded-xl border border-white/8 bg-elevated/30 p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <ShieldAlert className="w-3.5 h-3.5 text-muted/50" />
+        <p className="text-[11px] font-semibold text-muted/60 uppercase tracking-widest">Admin</p>
       </div>
+
+      {bet.status === 'open' && (
+        <Button
+          onClick={handleClose}
+          disabled={isLoading}
+          variant="outline"
+          size="sm"
+          className="w-full gap-2 border-amber-500/20 text-amber-400 hover:bg-amber-400/10 hover:border-amber-400/40 hover:text-amber-300"
+        >
+          <Lock className="w-3.5 h-3.5" />
+          {isLoading ? 'Closing…' : 'Close Betting'}
+        </Button>
+      )}
+
+      {bet.status === 'closed' && (
+        <Button
+          onClick={handleReopen}
+          disabled={isLoading}
+          variant="outline"
+          size="sm"
+          className="w-full gap-2 border-goblin/25 text-goblin hover:bg-goblin/10 hover:border-goblin/50"
+        >
+          <Unlock className="w-3.5 h-3.5" />
+          {isLoading ? 'Reopening…' : 'Reopen Betting'}
+        </Button>
+      )}
+
+      {(error || success) && (
+        <p className={`mt-2 flex items-center gap-1.5 text-xs ${error ? 'text-orange-400' : 'text-goblin'}`}>
+          {error
+            ? <AlertCircle className="w-3 h-3 flex-shrink-0" />
+            : <CheckCircle2 className="w-3 h-3 flex-shrink-0" />}
+          {error || success}
+        </p>
+      )}
+
+      <p className="mt-2 text-[11px] text-muted/40 leading-snug">
+        {bet.status === 'open'
+          ? 'Close to lock entries and allow resolution.'
+          : 'Reopen to allow new entries again.'}
+      </p>
     </div>
   )
 }

@@ -1,8 +1,14 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { AlertCircle, Coins, Swords } from 'lucide-react'
 
 interface BetCreationFormProps {
+  roster: string[]
   onCreateBet: (name: string, description: string, goldAmount: number, groupSize: number, closesAt: number) => Promise<void>
 }
 
@@ -14,52 +20,23 @@ export default function BetCreationForm({ onCreateBet }: BetCreationFormProps) {
   const [closingTime, setClosingTime] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    setSuccess(false)
 
-    // Validation
-    if (!name.trim()) {
-      setError('Bet name is required')
-      return
-    }
-
-    if (!description.trim()) {
-      setError('Bet description is required')
-      return
-    }
-
+    if (!name.trim()) { setError('Bet name is required'); return }
+    if (!description.trim()) { setError('Description is required'); return }
     const gold = parseInt(goldAmount)
-    if (isNaN(gold) || gold <= 0) {
-      setError('Gold amount must be a positive number')
-      return
-    }
-
+    if (isNaN(gold) || gold <= 0) { setError('Amount must be positive'); return }
     const size = parseInt(groupSize)
-    if (isNaN(size) || size < 1 || size > 40) {
-      setError('Group size must be between 1 and 40')
-      return
-    }
-
+    if (isNaN(size) || size < 1 || size > 40) { setError('Group size must be between 1 and 40'); return }
     const closingDate = new Date(closingTime)
-    if (closingDate.getTime() <= Date.now()) {
-      setError('Closing time must be in the future')
-      return
-    }
+    if (closingDate.getTime() <= Date.now()) { setError('Closing date must be in the future'); return }
 
     setIsLoading(true)
-
     try {
       await onCreateBet(name.trim(), description.trim(), gold, size, closingDate.getTime())
-      setSuccess(true)
-      setName('')
-      setDescription('')
-      setGoldAmount('')
-      setGroupSize('5')
-      setClosingTime('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create bet')
     } finally {
@@ -68,99 +45,90 @@ export default function BetCreationForm({ onCreateBet }: BetCreationFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
-      <div>
-        <label htmlFor="bet-name" className="block text-sm font-medium text-gray-700 mb-1">
-          Bet Name
-        </label>
-        <input
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="space-y-2">
+        <Label htmlFor="bet-name">Bet Name</Label>
+        <Input
           id="bet-name"
-          type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Mythic+ Speed Run"
+          placeholder="Race DPS - Amirdrassil HC"
           required
         />
       </div>
 
-      <div>
-        <label htmlFor="bet-description" className="block text-sm font-medium text-gray-700 mb-1">
-          Description
-        </label>
-        <textarea
+      <div className="space-y-2">
+        <Label htmlFor="bet-description">Description</Label>
+        <Textarea
           id="bet-description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Which group will complete the most +20 keys in 2 hours?"
+          placeholder="Which group will get the best combined DPS?"
           rows={3}
           required
         />
       </div>
 
-      <div>
-        <label htmlFor="gold-amount" className="block text-sm font-medium text-gray-700 mb-1">
-          Gold Amount (per participant)
-        </label>
-        <input
-          id="gold-amount"
-          type="number"
-          value={goldAmount}
-          onChange={(e) => setGoldAmount(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="1000"
-          required
-        />
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="gold-amount">
+            <span className="flex items-center gap-1.5">
+              <Coins className="w-3.5 h-3.5 text-gold" />
+              Gold per participant
+            </span>
+          </Label>
+          <Input
+            id="gold-amount"
+            type="number"
+            value={goldAmount}
+            onChange={(e) => setGoldAmount(e.target.value)}
+            placeholder="1000"
+            min="1"
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="group-size">
+            <span className="flex items-center gap-1.5">
+              <Swords className="w-3.5 h-3.5 text-muted" />
+              Group Size
+            </span>
+          </Label>
+          <Input
+            id="group-size"
+            type="number"
+            min="1"
+            max="40"
+            value={groupSize}
+            onChange={(e) => setGroupSize(e.target.value)}
+            placeholder="5"
+            required
+          />
+        </div>
       </div>
 
-      <div>
-        <label htmlFor="group-size" className="block text-sm font-medium text-gray-700 mb-1">
-          Group Size (players per team)
-        </label>
-        <input
-          id="group-size"
-          type="number"
-          min="1"
-          max="40"
-          value={groupSize}
-          onChange={(e) => setGroupSize(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="5"
-          required
-        />
-        <p className="text-xs text-gray-500 mt-1">Default: 5 players. Choose 1-40 players per team.</p>
-      </div>
-
-      <div>
-        <label htmlFor="closing-time" className="block text-sm font-medium text-gray-700 mb-1">
-          Closing Time
-        </label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="closing-time">Closing Date</Label>
+        <Input
           id="closing-time"
           type="datetime-local"
           value={closingTime}
           onChange={(e) => setClosingTime(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         />
       </div>
 
       {error && (
-        <p className="text-sm text-red-600">{error}</p>
+        <div className="flex items-center gap-2 text-sm text-orange-400 bg-table/10 border border-table/20 rounded-md px-3 py-2">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          {error}
+        </div>
       )}
 
-      {success && (
-        <p className="text-sm text-green-600">Bet created successfully!</p>
-      )}
-
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-      >
+      <Button type="submit" disabled={isLoading} className="w-full" size="lg">
         {isLoading ? 'Creating...' : 'Create Bet'}
-      </button>
+      </Button>
     </form>
   )
 }
