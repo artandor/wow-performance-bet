@@ -1,3 +1,102 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ─── Casino / Goblin Theme ─────────────────────────────────────────────── */
+/* Colors converted to HSL for shadcn CSS variable system                    */
+/* night   #0d0a1a → 255 41% 7%                                             */
+/* surface #1a1230 → 255 44% 13%                                            */
+/* elevated#241b42 → 255 43% 18%                                            */
+/* rim     #2e2255 → 255 41% 23%                                            */
+/* gold    #ffc93c → 43  100% 62%                                           */
+/* bright  #e8e0ff → 253 100% 94%                                           */
+/* muted   #9b8ec4 → 258 31% 66%                                            */
+/* table   #b8420a → 21  88%  38%                                           */
+/* goblin  #4aad3a → 110 50%  44%                                           */
+/* neon-pk #d946f5 → 291 89%  62%                                           */
+
+@layer base {
+  :root {
+    --background:   255 41% 7%;      /* night */
+    --foreground:   253 100% 94%;    /* bright */
+
+    --card:         255 44% 13%;     /* surface */
+    --card-foreground: 253 100% 94%;
+
+    --primary:      43  100% 62%;    /* gold */
+    --primary-foreground: 255 41% 7%;
+
+    --secondary:    255 43% 18%;     /* elevated */
+    --secondary-foreground: 253 100% 94%;
+
+    --muted:        255 41% 23%;     /* rim */
+    --muted-foreground: 258 31% 66%; /* muted text */
+
+    --accent:       291 89% 62%;     /* neon-pink */
+    --accent-foreground: 255 41% 7%;
+
+    --destructive:  21 88% 38%;      /* table / danger */
+    --destructive-foreground: 253 100% 94%;
+
+    --border:       255 41% 23%;     /* rim */
+    --input:        255 44% 13%;     /* surface */
+    --ring:         43  100% 62%;    /* gold */
+
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-night text-bright;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* ─── Custom utility classes ─────────────────────────────────────────────── */
+@layer utilities {
+  .text-gold-gradient {
+    background: linear-gradient(135deg, #ffc93c, #f5a623);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .border-gold-glow {
+    border-color: #ffc93c33;
+    box-shadow: 0 0 12px #ffc93c1a;
+  }
+
+  .card-casino {
+    background: #1a1230;
+    border: 0.5px solid #ffffff15;
+    border-radius: 10px;
+  }
+}
+
+/* ─── Leaderboard shimmer (gold #1 card) ────────────────────────────────── */
+@keyframes shimmer-sweep {
+  0%   { transform: translateX(-150%); }
+  100% { transform: translateX(150%);  }
+}
+
+.shimmer-gold {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-gold::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 25%,
+    rgba(255, 201, 60, 0.14) 50%,
+    transparent 75%
+  );
+  animation: shimmer-sweep 2.8s ease-in-out infinite;
+  pointer-events: none;
+}

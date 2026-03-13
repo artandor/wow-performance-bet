@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Trash2 } from 'lucide-react'
 
 interface DeleteBetButtonProps {
   betId: string
@@ -12,14 +14,9 @@ export default function DeleteBetButton({ betId, onDelete }: DeleteBetButtonProp
   const [showConfirm, setShowConfirm] = useState(false)
 
   const handleDelete = async (e: React.MouseEvent) => {
-    e.preventDefault() // Prevent navigation to bet detail page
+    e.preventDefault()
     e.stopPropagation()
-    
-    if (!showConfirm) {
-      setShowConfirm(true)
-      return
-    }
-
+    if (!showConfirm) { setShowConfirm(true); return }
     setIsDeleting(true)
     try {
       await onDelete(betId)
@@ -41,30 +38,25 @@ export default function DeleteBetButton({ betId, onDelete }: DeleteBetButtonProp
   if (showConfirm) {
     return (
       <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-        <button
-          onClick={handleDelete}
-          disabled={isDeleting}
-          className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 disabled:bg-gray-400"
-        >
-          {isDeleting ? 'Deleting...' : 'Confirm'}
-        </button>
-        <button
-          onClick={handleCancel}
-          className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
-        >
+        <Button size="sm" variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+          {isDeleting ? '...' : 'Confirm'}
+        </Button>
+        <Button size="sm" variant="outline" onClick={handleCancel}>
           Cancel
-        </button>
+        </Button>
       </div>
     )
   }
 
   return (
-    <button
+    <Button
+      size="icon"
+      variant="ghost"
       onClick={handleDelete}
-      className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
       title="Delete bet"
+      className="text-muted hover:text-table hover:bg-table/10"
     >
-      Delete
-    </button>
+      <Trash2 className="w-4 h-4" />
+    </Button>
   )
 }

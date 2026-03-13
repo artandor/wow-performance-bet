@@ -1,5 +1,4 @@
-import { kv } from '@vercel/kv'
-import { Bet, Participant } from '@/types'
+import { Participant, getBetKind } from '@/types'
 import { getBet, updateBet } from './bet-storage'
 
 export async function addParticipantToBet(
@@ -18,7 +17,7 @@ export async function addParticipantToBet(
     }
     
     // Check if participant already exists
-    const existingParticipant = bet.participants.find(
+    const existingParticipant = (bet.participants as Participant[]).find(
       p => p.playerId === participant.playerId
     )
     
@@ -27,7 +26,7 @@ export async function addParticipantToBet(
     }
     
     // Add participant
-    bet.participants.push(participant)
+    ;(bet.participants as Participant[]).push(participant)
     await updateBet(bet)
     
     return { success: true }
@@ -48,7 +47,7 @@ export async function removeParticipantFromBet(
       return { success: false, error: 'Bet not found' }
     }
     
-    bet.participants = bet.participants.filter(
+    ;(bet as { participants: Participant[] }).participants = (bet.participants as Participant[]).filter(
       p => p.playerId !== playerId
     )
     

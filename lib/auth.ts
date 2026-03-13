@@ -1,5 +1,6 @@
 import NextAuth, { DefaultSession } from "next-auth";
 import Discord from "next-auth/providers/discord";
+import { DEMO_SESSION } from "./demo/session";
 
 declare module "next-auth" {
   interface Session {
@@ -16,7 +17,17 @@ declare module "next-auth" {
   }
 }
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const { handlers, auth, signIn, signOut } = process.env.DEMO_MODE === 'true'
+  ? {
+      handlers: {
+        GET: async () => new Response(null, { status: 404 }),
+        POST: async () => new Response(null, { status: 404 }),
+      },
+      auth: async () => DEMO_SESSION as any,
+      signIn: async () => {},
+      signOut: async () => {},
+    }
+  : NextAuth({
   providers: [
     Discord({
       clientId: process.env.DISCORD_CLIENT_ID!,

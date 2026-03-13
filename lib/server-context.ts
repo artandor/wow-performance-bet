@@ -43,7 +43,7 @@ export async function getServerContext(): Promise<ServerContext | null> {
   
   // Validate that activeServerId exists in user's guild list
   if (activeServerId) {
-    const guildExists = guilds.some((guild) => guild.id === activeServerId);
+    const guildExists = guilds.some((guild: { id: string }) => guild.id === activeServerId);
     
     if (!guildExists && guilds.length > 0) {
       // Invalid server, reset to first guild (but don't set cookie)
@@ -75,7 +75,7 @@ export async function verifyServerAccess(
     return { hasAccess: false, userId: null };
   }
   
-  const hasAccess = session.user.guilds.some((guild) => guild.id === serverId);
+  const hasAccess = session.user.guilds.some((guild: { id: string }) => guild.id === serverId);
   
   return {
     hasAccess,

@@ -1,7 +1,9 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import PlayerSelector from './PlayerSelector'
+import { Button } from '@/components/ui/button'
+import { AlertCircle, CheckCircle2, Coins } from 'lucide-react'
 
 interface BetParticipationFormProps {
   betId: string
@@ -23,25 +25,30 @@ export default function BetParticipationForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
-    setSuccess(false)
+    setError(''); setSuccess(false)
 
     if (selectedPlayers.length !== groupSize) {
-      setError(`You must select exactly ${groupSize} players`)
+      setError(`Select exactly ${groupSize} player${groupSize > 1 ? 's' : ''}`)
       return
     }
 
     setIsLoading(true)
-
     try {
       await onPlaceBet(betId, selectedPlayers)
       setSuccess(true)
       setSelectedPlayers([])
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to place bet')
-    } finally {
-      setIsLoading(false)
-    }
+      setError(err instanceof Error ? err.message : 'Failed')
+    } finally { setIsLoading(false) }
+  }
+
+  if (success) {
+    return (
+      <div className="flex flex-col items-center gap-2 py-6 text-goblin">
+        <CheckCircle2 className="w-8 h-8" />
+        <p className="font-semibold">Bet placed!</p>
+      </div>
+    )
   }
 
   return (
@@ -54,20 +61,20 @@ export default function BetParticipationForm({
       />
 
       {error && (
-        <p className="text-sm text-red-600">{error}</p>
+        <p className="flex items-center gap-1.5 text-xs text-orange-400">
+          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" /> {error}
+        </p>
       )}
 
-      {success && (
-        <p className="text-sm text-green-600">Bet placed successfully!</p>
-      )}
-
-      <button
+      <Button
         type="submit"
         disabled={isLoading || selectedPlayers.length !== groupSize}
-        className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+        className="w-full gap-2"
+        variant="success"
       >
-        {isLoading ? 'Placing Bet...' : 'Place Bet'}
-      </button>
+        <Coins className="w-4 h-4" />
+        {isLoading ? 'Placing bet...' : 'Place Bet'}
+      </Button>
     </form>
   )
 }

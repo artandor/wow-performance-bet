@@ -15,9 +15,16 @@ const getRedisClient = () => {
   }
 }
 
-const redis = getRedisClient()
+// Lazy initialization: Redis client is created only on first use,
+// so the module can be imported without env vars (e.g. in demo mode).
+let _redis: ReturnType<typeof getRedisClient> | null = null
+const getRedis = () => {
+  if (!_redis) _redis = getRedisClient()
+  return _redis
+}
 
 export async function kvGet<T>(key: string): Promise<T | null> {
+  const redis = getRedis()
   try {
     const value = await redis.get(key)
     return value ? JSON.parse(value) : null
@@ -28,6 +35,7 @@ export async function kvGet<T>(key: string): Promise<T | null> {
 }
 
 export async function kvSet<T>(key: string, value: T): Promise<void> {
+  const redis = getRedis()
   try {
     await redis.set(key, JSON.stringify(value))
   } catch (error) {
@@ -37,6 +45,7 @@ export async function kvSet<T>(key: string, value: T): Promise<void> {
 }
 
 export async function kvDelete(key: string): Promise<void> {
+  const redis = getRedis()
   try {
     await redis.del(key)
   } catch (error) {
@@ -46,6 +55,7 @@ export async function kvDelete(key: string): Promise<void> {
 }
 
 export async function kvGetAll<T>(pattern: string): Promise<T[]> {
+  const redis = getRedis()
   try {
     const keys = await redis.keys(pattern)
     if (keys.length === 0) return []
