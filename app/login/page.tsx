@@ -22,7 +22,7 @@ export default async function LoginPage({
         </h1>
         
         <p className="text-gray-300 mb-8 text-center">
-          Sign in with Discord to access your server's betting pools
+          Sign in with Discord to access your server&apos;s betting pools
         </p>
         
         {params.error && (
