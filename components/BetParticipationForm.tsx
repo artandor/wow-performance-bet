@@ -10,6 +10,7 @@ interface BetParticipationFormProps {
   roster: string[]
   groupSize: number
   onPlaceBet: (betId: string, selectedGroup: string[]) => Promise<void>
+  existingAnswer?: string[]
 }
 
 export default function BetParticipationForm({
@@ -17,8 +18,10 @@ export default function BetParticipationForm({
   roster,
   groupSize,
   onPlaceBet,
+  existingAnswer,
 }: BetParticipationFormProps) {
-  const [selectedPlayers, setSelectedPlayers] = useState<string[]>([])
+  const isUpdate = !!existingAnswer
+  const [selectedPlayers, setSelectedPlayers] = useState<string[]>(existingAnswer ?? [])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
@@ -46,7 +49,7 @@ export default function BetParticipationForm({
     return (
       <div className="flex flex-col items-center gap-2 py-6 text-goblin">
         <CheckCircle2 className="w-8 h-8" />
-        <p className="font-semibold">Bet placed!</p>
+        <p className="font-semibold">{isUpdate ? 'Bet updated!' : 'Bet placed!'}</p>
       </div>
     )
   }
@@ -73,7 +76,7 @@ export default function BetParticipationForm({
         variant="success"
       >
         <Coins className="w-4 h-4" />
-        {isLoading ? 'Placing bet...' : 'Place Bet'}
+        {isLoading ? 'Placing bet...' : isUpdate ? 'Update Bet' : 'Place Bet'}
       </Button>
     </form>
   )

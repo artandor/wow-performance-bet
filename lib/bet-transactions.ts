@@ -16,17 +16,17 @@ export async function addParticipantToBet(
       return { success: false, error: 'Bet is not open for participation' }
     }
     
-    // Check if participant already exists
-    const existingParticipant = (bet.participants as Participant[]).find(
+    // Upsert: replace existing entry if present, otherwise append
+    const participants = bet.participants as Participant[]
+    const existingIndex = participants.findIndex(
       p => p.playerId === participant.playerId
     )
     
-    if (existingParticipant) {
-      return { success: false, error: 'You have already placed a bet' }
+    if (existingIndex >= 0) {
+      participants[existingIndex] = participant
+    } else {
+      participants.push(participant)
     }
-    
-    // Add participant
-    ;(bet.participants as Participant[]).push(participant)
     await updateBet(bet)
     
     return { success: true }

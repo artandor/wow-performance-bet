@@ -2,7 +2,7 @@
 
 import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Bet, BetPrediction, BetH2H, getBetKind } from '@/types'
+import { Bet, BetPrediction, BetH2H, getBetKind, Participant } from '@/types'
 import {
   getBetAction,
   placeBetAction,
@@ -14,6 +14,7 @@ import {
   closeBetAction,
   reopenBetAction,
   updateBetInfoAction,
+  getCurrentUserAnswerAction,
 } from '@/app/actions/bet'
 import { getRosterAction } from '@/app/actions/roster'
 import BetDetails from '@/components/BetDetails'
@@ -35,15 +36,17 @@ export default function BetDetailPage({ params }: { params: Promise<{ id: string
   const [bet, setBet] = useState<Bet | null>(null)
   const [roster, setRoster] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
+  const [myAnswer, setMyAnswer] = useState<Participant | null>(null)
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadData() }, [id])
 
   const loadData = async () => {
     setLoading(true)
-    const [betData, rosterData] = await Promise.all([getBetAction(id), getRosterAction()])
+    const [betData, rosterData, answerData] = await Promise.all([getBetAction(id), getRosterAction(), getCurrentUserAnswerAction(id)])
     if (betData) setBet(updateBetStatus(betData))
     setRoster(rosterData)
+    setMyAnswer(answerData)
     setLoading(false)
   }
 
@@ -109,7 +112,11 @@ export default function BetDetailPage({ params }: { params: Promise<{ id: string
                 <h3 className="text-sm font-semibold text-bright">Pick Your Side</h3>
                 <span className="text-xs text-muted ml-1">({bet.goldAmount.toLocaleString()}g entry)</span>
               </div>
-              <H2HParticipationForm bet={bet as BetH2H} onSubmit={handlePlaceH2H} />
+              <H2HParticipationForm
+                bet={bet as BetH2H}
+                onSubmit={handlePlaceH2H}
+                existingAnswer={myAnswer && 'sideIndex' in myAnswer ? (myAnswer.sideIndex as 0 | 1) : undefined}
+              />
             </div>
           )}
 
@@ -149,6 +156,7 @@ export default function BetDetailPage({ params }: { params: Promise<{ id: string
                   roster={roster}
                   groupSize={(bet as { groupSize?: number }).groupSize ?? 1}
                   onPlaceBet={handlePlaceBet}
+                  existingAnswer={myAnswer && 'selectedGroup' in myAnswer ? myAnswer.selectedGroup : undefined}
                 />
               </div>
             )}
@@ -159,7 +167,11 @@ export default function BetDetailPage({ params }: { params: Promise<{ id: string
                   <span className="w-2 h-2 rounded-full bg-neon-pink" />
                   <h3 className="text-sm font-semibold text-bright">Submit Your Answer</h3>
                 </div>
-                <PredictionParticipationForm bet={bet as BetPrediction} onSubmit={handlePlacePred} />
+                <PredictionParticipationForm
+                  bet={bet as BetPrediction}
+                  onSubmit={handlePlacePred}
+                  existingAnswer={myAnswer && 'answer' in myAnswer ? myAnswer.answer : undefined}
+                />
               </div>
             )}
 

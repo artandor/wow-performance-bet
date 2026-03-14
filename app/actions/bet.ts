@@ -201,7 +201,6 @@ export async function placePredictionAnswerAction(betId: string, answer: string)
   if (bet.status !== 'open') throw new Error('Bet is not open')
 
   const b = bet as BetPrediction
-  if (b.participants.find(p => p.playerId === user.id)) throw new Error('You have already answered')
   if (!answer?.trim()) throw new Error('Answer is required')
 
   const participant: PredictionParticipant = {
@@ -211,7 +210,12 @@ export async function placePredictionAnswerAction(betId: string, answer: string)
     answer: answer.trim(),
   }
 
-  b.participants.push(participant)
+  const existingIndex = b.participants.findIndex(p => p.playerId === user.id)
+  if (existingIndex >= 0) {
+    b.participants[existingIndex] = participant
+  } else {
+    b.participants.push(participant)
+  }
   await updateBet(b)
   revalidatePath(`/bets/${betId}`)
   revalidatePath('/')
@@ -231,7 +235,6 @@ export async function placeH2HAction(betId: string, sideIndex: number) {
   if (bet.status !== 'open') throw new Error('Bet is not open')
 
   const b = bet as BetH2H
-  if (b.participants.find(p => p.playerId === user.id)) throw new Error('You have already chosen a side')
   if (sideIndex !== 0 && sideIndex !== 1) throw new Error('Invalid side')
 
   const participant: H2HParticipant = {
@@ -241,7 +244,12 @@ export async function placeH2HAction(betId: string, sideIndex: number) {
     sideIndex,
   }
 
-  b.participants.push(participant)
+  const existingIndex = b.participants.findIndex(p => p.playerId === user.id)
+  if (existingIndex >= 0) {
+    b.participants[existingIndex] = participant
+  } else {
+    b.participants.push(participant)
+  }
   await updateBet(b)
   revalidatePath(`/bets/${betId}`)
   revalidatePath('/')
@@ -258,6 +266,18 @@ export async function getBetAction(betId: string) {
     if (!hasAccess) throw new Error('Access denied: You are not a member of this server')
   }
   return bet
+}
+
+// ─── Get current user's existing answer ───────────────────────────────────
+
+export async function getCurrentUserAnswerAction(betId: string) {
+  if (IS_DEMO) return demo.demoGetCurrentUserAnswer(betId)
+  const user = await getCurrentUser()
+  if (!user) return null
+  const bet = await getBet(betId)
+  if (!bet) return null
+  const participants = bet.participants as import('@/types').Participant[]
+  return participants.find(p => p.playerId === user.id) ?? null
 }
 
 // ─── Resolve actions ───────────────────────────────────────────────────────

@@ -54,16 +54,20 @@ export function demoPlaceBet(betId: string, selectedGroup: string[]): void {
   const bet = getBetById(betId)
   if (!bet) throw new Error('Bet not found')
   if (bet.status !== 'open') throw new Error('Bet is not open for participation')
-  if (bet.participants.find(p => p.playerId === DEMO_USER_ID)) {
-    throw new Error('You have already placed a bet')
-  }
-  const participant = {
+  const newParticipant = {
     kind: 'group-dps' as const,
     playerId: DEMO_USER_ID,
     playerName: DEMO_USERNAME,
     selectedGroup,
   }
-  saveBet({ ...bet, participants: [...bet.participants, participant] } as Bet)
+  const existingIndex = bet.participants.findIndex(p => p.playerId === DEMO_USER_ID)
+  if (existingIndex >= 0) {
+    const updated = [...bet.participants]
+    updated[existingIndex] = newParticipant
+    saveBet({ ...bet, participants: updated } as Bet)
+  } else {
+    saveBet({ ...bet, participants: [...bet.participants, newParticipant] } as Bet)
+  }
 }
 
 export function demoResolveBet(betId: string, winningGroup: string[]): void {
@@ -133,16 +137,15 @@ export function demoPlacePredictionAnswer(betId: string, answer: string): void {
   const bet = getBetById(betId) as BetPrediction | null
   if (!bet || bet.kind !== 'prediction') throw new Error('Prediction bet not found')
   if (bet.status !== 'open') throw new Error('Bet is not open')
-  if (bet.participants.find(p => p.playerId === DEMO_USER_ID)) {
-    throw new Error('You have already answered')
+  const newParticipant = { kind: 'prediction' as const, playerId: DEMO_USER_ID, playerName: DEMO_USERNAME, answer }
+  const existingIndex = bet.participants.findIndex(p => p.playerId === DEMO_USER_ID)
+  if (existingIndex >= 0) {
+    const updated = [...bet.participants]
+    updated[existingIndex] = newParticipant
+    saveBet({ ...bet, participants: updated } as Bet)
+  } else {
+    saveBet({ ...bet, participants: [...bet.participants, newParticipant] } as Bet)
   }
-  saveBet({
-    ...bet,
-    participants: [
-      ...bet.participants,
-      { kind: 'prediction', playerId: DEMO_USER_ID, playerName: DEMO_USERNAME, answer },
-    ],
-  } as Bet)
 }
 
 export function demoResolvePredictionBet(betId: string, realAnswer: string): void {
@@ -205,22 +208,27 @@ export function demoPlaceH2H(betId: string, sideIndex: 0 | 1): void {
   const bet = getBetById(betId) as BetH2H | null
   if (!bet || bet.kind !== 'h2h') throw new Error('H2H bet not found')
   if (bet.status !== 'open') throw new Error('Bet is not open')
-  if (bet.participants.find(p => p.playerId === DEMO_USER_ID)) {
-    throw new Error('You have already placed a bet')
+  const newParticipant = { kind: 'h2h' as const, playerId: DEMO_USER_ID, playerName: DEMO_USERNAME, sideIndex }
+  const existingIndex = bet.participants.findIndex(p => p.playerId === DEMO_USER_ID)
+  if (existingIndex >= 0) {
+    const updated = [...bet.participants]
+    updated[existingIndex] = newParticipant
+    saveBet({ ...bet, participants: updated } as Bet)
+  } else {
+    saveBet({ ...bet, participants: [...bet.participants, newParticipant] } as Bet)
   }
-  saveBet({
-    ...bet,
-    participants: [
-      ...bet.participants,
-      { kind: 'h2h', playerId: DEMO_USER_ID, playerName: DEMO_USERNAME, sideIndex },
-    ],
-  } as Bet)
 }
 
 export function demoResolveH2H(betId: string, winningSideIndex: 0 | 1): void {
   const bet = getBetById(betId) as BetH2H | null
   if (!bet || bet.kind !== 'h2h') throw new Error('H2H bet not found')
   saveBet({ ...bet, status: 'resolved', winningSideIndex } as Bet)
+}
+
+export function demoGetCurrentUserAnswer(betId: string): import('@/types').Participant | null {
+  const bet = getBetById(betId)
+  if (!bet) return null
+  return (bet.participants as import('@/types').Participant[]).find(p => p.playerId === DEMO_USER_ID) ?? null
 }
 
 // ─── Gold ledger ─────────────────────────────────────────────────────────────
